@@ -1,3 +1,5 @@
 discord.py>=2.0.0
 requests
 python-dotenv
+Flask
+gunicorn # Add gunicorn as a production WSGI server
