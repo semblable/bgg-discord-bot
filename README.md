@@ -124,4 +124,4 @@ This project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`)
         *   `Uninstall`: Stops and removes the container.
 *   **Manual Trigger Inputs:**
     *   `build_image` (boolean, default: `true`): Choose whether to build and push the Docker image.
-    *   `operation` (choice, default: `Reinstall`): Choose the deployment action (`Install`, `Uninstall`, `Reinstall`).
+    *   `operation` (choice, default: `Reinstall`): Choose the deployment action (`Install`, `Uninstall`, `Reinstall`)..
