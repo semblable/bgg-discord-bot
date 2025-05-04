@@ -64,7 +64,7 @@ class BggCommands(commands.Cog):
                         "No games found matching your search query.", ephemeral=True
                     )
                     return
-                game_id = results[0]["id"] # Use the ID of the first search result
+                game_id = results[0]["id"]  # Use the ID of the first search result
 
             if not game_id:
                 await ctx.send(
@@ -107,11 +107,13 @@ class BggCommands(commands.Cog):
                     for rank in stats["ranks"]:
                         if rank.get("value") and rank["value"] != "Not Ranked":
                             rank_name = (
-                                rank.get("name", "Overall") # Use friendly name for rank type
+                                rank.get(
+                                    "name", "Overall"
+                                )  # Use friendly name for rank type
                                 .replace("boardgame", "")
                                 .capitalize()
                             )
-                            if not rank_name: # Handle empty name after replace
+                            if not rank_name:  # Handle empty name after replace
                                 rank_name = "Overall"
                             ranks_str += f"{rank_name}: {rank['value']}\n"
 
@@ -142,7 +144,7 @@ class BggCommands(commands.Cog):
                 return
 
             response_lines = [f"Found {len(results)} game(s) matching '{query}':"]
-            for i, game in enumerate(results[:10]): # Limit to top 10 results
+            for i, game in enumerate(results[:10]):  # Limit to top 10 results
                 year_str = f"({game['year']})" if game.get("year") else ""
                 response_lines.append(
                     f"{i+1}. {game['name']} {year_str} - ID: `{game['id']}`"
@@ -243,7 +245,7 @@ class BggCommands(commands.Cog):
                         "No games found matching your search query.", ephemeral=True
                     )
                     return
-                game_id = results[0]["id"] # Use the ID of the first search result
+                game_id = results[0]["id"]  # Use the ID of the first search result
 
             if not game_id:
                 await ctx.send(
@@ -295,7 +297,7 @@ class BggCommands(commands.Cog):
             # Resolve query to game ID first
             if query.isdigit():
                 game_id = query
-                try: # Fetch name for confirmation message if ID provided
+                try:  # Fetch name for confirmation message if ID provided
                     game_data = self.bgg.fetch_thing_data(game_id, stats=False)
                     game_name = game_data.get("name", game_name)
                 except Exception:
@@ -374,7 +376,7 @@ class BggCommands(commands.Cog):
                 user_data[user_id]["favorites"].remove(game_id)
                 self._save_user_data(user_data)
                 game_name = "Unknown Game"
-                try: # Fetch name for confirmation message
+                try:  # Fetch name for confirmation message
                     game_data = self.bgg.fetch_thing_data(game_id, stats=False)
                     game_name = game_data.get("name", game_name)
                 except Exception:

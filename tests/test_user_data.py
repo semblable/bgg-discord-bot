@@ -122,7 +122,9 @@ async def test_bggfav_remove(
     }  # For confirmation message
 
     # Call the callback directly
-    await bgg_cog.bggfav_remove.callback(bgg_cog, mock_context, game_id=game_id_to_remove)
+    await bgg_cog.bggfav_remove.callback(
+        bgg_cog, mock_context, game_id=game_id_to_remove
+    )
 
     mock_context.defer.assert_called_once_with(ephemeral=True)
     mock_json_load.assert_called_once()
