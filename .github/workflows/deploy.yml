@@ -106,6 +106,7 @@ jobs:
           host: ${{ secrets.DEPLOY_SERVER_HOST }}
           username: ${{ secrets.DEPLOY_SERVER_USER }}
           key: ${{ secrets.DEPLOY_SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.DEPLOY_SERVER_SSH_PASSPHRASE }} # Added passphrase input
           script: |
             set -e # Exit immediately if a command exits with a non-zero status.
             OPERATION=${{ steps.inputs.outputs.operation }}
