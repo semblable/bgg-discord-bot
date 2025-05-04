@@ -1,0 +1,4 @@
+pytest
+pytest-asyncio
+black
+# Add other development dependencies here if needed

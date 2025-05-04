@@ -1,0 +1,148 @@
+name: Deploy Discord Bot
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+  workflow_dispatch: # Allows manual triggering with inputs
+    inputs:
+      build_image:
+        description: 'Build Docker image?'
+        required: true
+        type: boolean
+        default: true
+      operation:
+        description: 'Deployment operation'
+        required: true
+        type: choice
+        options:
+          - Reinstall
+          - Install
+          - Uninstall
+        default: 'Reinstall'
+
+jobs:
+  test:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10' # Match Dockerfile Python version
+
+      - name: Install dependencies (Prod + Dev)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Lint with Black
+        run: black --check .
+
+      - name: Run tests with Pytest
+        run: pytest tests/
+
+  build:
+    name: Build and Push Docker Image
+    needs: test # Depends on the test job succeeding
+    # Only run if 'build_image' input is true (or if triggered by push, where input isn't available, default to true logic)
+    if: github.event_name == 'push' || github.event.inputs.build_image == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest # Example tag: your-username/your-repo-name:latest
+
+  deploy:
+    name: Deploy to Server
+    needs: [test, build] # Depends on test always, and build if it ran
+    # Run if build job was skipped OR if build job succeeded
+    if: always() && (needs.build.result == 'skipped' || needs.build.result == 'success') && needs.test.result == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get Inputs (for manual trigger) or Defaults (for push)
+        id: inputs
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "operation=${{ github.event.inputs.operation }}" >> $GITHUB_OUTPUT
+            echo "build_ran=true" >> $GITHUB_OUTPUT # Assume build ran if manually triggered and deploy is running
+          else
+            # Default operation for push trigger
+            echo "operation=Reinstall" >> $GITHUB_OUTPUT
+            # Check if build job actually ran (it might have been skipped if if condition was false)
+            if [ "${{ needs.build.result }}" == "skipped" ]; then
+               echo "build_ran=false" >> $GITHUB_OUTPUT
+            else
+               echo "build_ran=true" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Deploy based on operation
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_SERVER_HOST }}
+          username: ${{ secrets.DEPLOY_SERVER_USER }}
+          key: ${{ secrets.DEPLOY_SERVER_SSH_KEY }}
+          script: |
+            set -e # Exit immediately if a command exits with a non-zero status.
+            OPERATION=${{ steps.inputs.outputs.operation }}
+            BUILD_RAN=${{ steps.inputs.outputs.build_ran }}
+            IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest
+            CONTAINER_NAME=discord-bgg-bot # Choose a consistent container name
+
+            echo "--- Starting Deployment Operation: $OPERATION ---"
+
+            # Stop and remove existing container if Uninstall or Reinstall
+            if [ "$OPERATION" = "Uninstall" ] || [ "$OPERATION" = "Reinstall" ]; then
+              echo "Stopping and removing existing container '$CONTAINER_NAME' (if it exists)..."
+              docker stop $CONTAINER_NAME || true # Ignore error if container doesn't exist
+              docker rm $CONTAINER_NAME || true   # Ignore error if container doesn't exist
+              echo "Container stopped and removed."
+            fi
+
+            # Pull image and run container if Install or Reinstall
+            if [ "$OPERATION" = "Install" ] || [ "$OPERATION" = "Reinstall" ]; then
+              # Pull the latest image only if it was built in this workflow run
+              if [ "$BUILD_RAN" = "true" ]; then
+                 echo "Pulling latest Docker image: $IMAGE_NAME ..."
+                 docker pull $IMAGE_NAME
+              else
+                 echo "Skipping image pull as build step was skipped."
+              fi
+
+              echo "Starting new container '$CONTAINER_NAME'..."
+              # Run in detached mode, restart always, pass Discord token as env var, map port
+              docker run -d \
+                --name $CONTAINER_NAME \
+                --restart always \
+                -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} \
+                -e PORT=5000 \
+                -p 5000:5000 \
+                $IMAGE_NAME
+              echo "Container started successfully."
+            fi
+
+            echo "--- Deployment Operation: $OPERATION Completed ---"

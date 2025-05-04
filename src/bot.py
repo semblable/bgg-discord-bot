@@ -2,44 +2,45 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from flask import Flask # Import Flask
-import threading # Import threading for running bot in a separate thread
-import asyncio # Import asyncio
+from flask import Flask
+import threading  # Import threading for running bot in a separate thread
+import asyncio
 
-# Load environment variables
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = os.getenv("DISCORD_TOKEN")
 # Render provides the PORT environment variable
-PORT = int(os.getenv('PORT', 5000)) # Default to 5000 if PORT is not set
+PORT = int(os.getenv("PORT", 5000))  # Default to 5000 if PORT is not set
 
-# Set up bot
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Set up Flask app
 app = Flask(__name__)
 
-@app.route('/')
+
+@app.route("/")
 def home():
     """Simple endpoint to keep the service alive."""
     return "Discord bot is running!"
 
+
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user.name} (ID: {bot.user.id})')
-    print('------')
+    print(f"Logged in as {bot.user.name} (ID: {bot.user.id})")
+    print("------")
     # You might want to sync commands here if using app commands
     # await bot.tree.sync()
-    print('Bot is ready.')
+    print("Bot is ready.")
+
 
 async def load_cogs():
     """Loads the bot's command cogs."""
     try:
-        await bot.load_extension('cogs.bgg_commands')
+        await bot.load_extension("src.cogs.bgg_commands")
         print("Cogs loaded successfully.")
     except Exception as e:
         print(f"Failed to load cogs: {e}")
+
 
 # Function to run the bot's async loop in a separate thread
 def run_bot_thread():
@@ -72,9 +73,9 @@ bot_thread.start()
 # gunicorn bot:app will run the Flask app, and the bot will be running in the background thread.
 
 # For local testing, you might still want a __main__ block
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Running Flask app locally...")
     # In a local environment, you might run Flask directly
     # In production (Render with gunicorn), gunicorn handles this
     # Running with debug=True is not recommended in production
-    app.run(host='0.0.0.0', port=PORT)
+    app.run(host="0.0.0.0", port=PORT)

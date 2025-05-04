@@ -1,0 +1,11 @@
+version: '3.8' # Specify compose file version
+
+services:
+  bgg-bot:
+    build: . # Build the image from the Dockerfile in the current directory
+    container_name: discord-bgg-bot # Assign a specific name to the container
+    restart: unless-stopped # Restart policy
+    env_file:
+      - .env # Load environment variables from the .env file (DISCORD_TOKEN)
+    ports:
+      - "5000:5000" # Map host port 5000 to container port 5000 (for Flask/Gunicorn)

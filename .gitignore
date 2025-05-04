@@ -17,3 +17,5 @@ env/
 .idea/
 *.swp
 *.swo
+# User data
+src/user_data.json
