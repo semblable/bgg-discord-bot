@@ -16,30 +16,6 @@ This project is structured to meet the requirements for the CRC 2025 course.
     *   `!bggfav remove <game_id>`: Remove a game from your favorites list using its BGG ID.
     *   `!bggfav list`: Display your list of favorite games.
 
-## Project Structure
-
-```
-.
-├── .env                # Local environment variables (TOKEN, etc.) - Not committed
-├── .gitignore          # Specifies intentionally untracked files
-├── docker-compose.yml  # Docker Compose configuration
-├── Dockerfile          # Instructions for building the Docker image
-├── README.md           # This file
-├── requirements-dev.txt # Dependencies for testing and development
-├── requirements.txt    # Project dependencies
-├── src/                # Source code directory
-│   ├── __init__.py
-│   ├── bgg_api.py      # BGG API client
-│   ├── bot.py          # Main bot application logic (includes Flask for deployment)
-│   ├── cogs/           # Bot command modules (cogs)
-│   │   ├── __init__.py
-│   │   └── bgg_commands.py # Commands related to BGG
-│   └── user_data.json  # Stores user favorites (Not committed)
-└── tests/              # Unit tests
-    ├── __init__.py
-    ├── test_bgg_commands.py
-    └── test_user_data.py
-```
 
 ## Setup and Running Locally
 
